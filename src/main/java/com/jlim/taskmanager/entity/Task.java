@@ -34,5 +34,6 @@ public class Task {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        completed = false;
     }
 }
