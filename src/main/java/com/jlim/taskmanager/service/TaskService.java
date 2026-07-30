@@ -1,9 +1,13 @@
 package com.jlim.taskmanager.service;
 
+import com.jlim.taskmanager.dto.TaskRequest;
+import com.jlim.taskmanager.dto.TaskResponse;
 import com.jlim.taskmanager.entity.Task;
 import com.jlim.taskmanager.exception.TaskNotFoundException;
+import com.jlim.taskmanager.mapper.TaskMapper;
 import com.jlim.taskmanager.repository.TaskRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,9 +17,11 @@ import java.util.Optional;
 @Transactional // this sits between controller and repository, specify spring that db operations run in transactions. If something in the transaction fails, it rolls back
 public class TaskService {
     private final TaskRepository taskRepository;
+    private final TaskMapper taskMapper;
 
-    public TaskService(TaskRepository taskRepository){
+    public TaskService(TaskRepository taskRepository, TaskMapper taskMapper){
         this.taskRepository = taskRepository;
+        this.taskMapper = taskMapper;
     }
 
     // move the business logic from controller to service layer, and call the service layer from the controller. This is a better design pattern,
@@ -29,17 +35,21 @@ public class TaskService {
         return taskRepository.findById(id).orElseThrow(() -> new TaskNotFoundException(id));
     }
 
-    public Task createTask(Task task){
-        return taskRepository.save(task);
+    public TaskResponse createTask(TaskRequest task){
+
+        Task entityTask = taskMapper.toEntity(task);
+        Task savedTask = taskRepository.save(entityTask);
+
+        return taskMapper.toResponse(savedTask);
+
     }
 
-    public Task updateTask(Long id, Task updatedTask){
+    public TaskResponse updateTask(Long id, TaskRequest updatedTask){
         Task task = taskRepository.findById(id).orElseThrow(() -> new TaskNotFoundException(id));
 
-        task.setTitle(updatedTask.getTitle());
-        task.setDescription(updatedTask.getDescription());
-        task.setCompleted(updatedTask.getCompleted());
-        return taskRepository.save(task);
+        taskMapper.updateEntityFromRequest(task, updatedTask);
+        taskRepository.save(task);
+        return taskMapper.toResponse(task);
 
     }
 

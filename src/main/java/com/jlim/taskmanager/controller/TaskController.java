@@ -1,5 +1,7 @@
 package com.jlim.taskmanager.controller;
 
+import com.jlim.taskmanager.dto.TaskRequest;
+import com.jlim.taskmanager.dto.TaskResponse;
 import com.jlim.taskmanager.entity.Task;
 import com.jlim.taskmanager.repository.TaskRepository;
 import com.jlim.taskmanager.service.TaskService;
@@ -39,8 +41,8 @@ public class TaskController {
     // -- Create
     // create task
     @PostMapping
-    public ResponseEntity<Task> createTask(@Valid @RequestBody Task task){
-        Task savedTask = taskService.createTask(task);
+    public ResponseEntity<TaskResponse> createTask(@Valid @RequestBody TaskRequest task){
+        TaskResponse savedTask = taskService.createTask(task);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTask);
     }
 
@@ -48,7 +50,7 @@ public class TaskController {
     // can also use tasks.stream instead of for loop
     // send id and desired task request
     @PutMapping("/{id}")
-    public Task updateTask(@PathVariable Long id, @Valid @RequestBody Task updatedTask){
+    public TaskResponse updateTask(@PathVariable Long id, @Valid @RequestBody TaskRequest updatedTask){
         return taskService.updateTask(id, updatedTask);
     }
 
