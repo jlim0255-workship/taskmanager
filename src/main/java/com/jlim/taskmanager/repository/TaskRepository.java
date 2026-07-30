@@ -14,9 +14,9 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByCompleted(boolean completed);
 
     List<Task> findByTitleContainingIgnoreCase(String title);
-    
+
     // custom query that requires @Query annotation for Java Persistence Query Language (JPQL)
     // by querying the entity name
     @Query("SELECT t FROM Task t WHERE t.completed = :completed")
-    List<Task> findTasksByCompletedStatus(@Param("completed") boolean completed);
+    List<Task> findTasksByCompletionStatus(@Param("completed") boolean completed);
 }
