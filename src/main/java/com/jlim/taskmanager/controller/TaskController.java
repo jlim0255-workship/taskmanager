@@ -73,4 +73,15 @@ public class TaskController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // -- Custom endpoint
+    @GetMapping("/completed/{status}")
+    public List<Task> getTasksByCompletedStatus(@PathVariable boolean status){
+        return taskRepository.findTasksByCompletedStatus(status);
+    }
+
+    @GetMapping("/search")
+    public List<Task> searchTasksByTitle(@RequestParam String title){
+        return taskRepository.findByTitleContainingIgnoreCase(title);
+    }
+
 }
