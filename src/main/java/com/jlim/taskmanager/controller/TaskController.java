@@ -1,6 +1,9 @@
 package com.jlim.taskmanager.controller;
 
 import com.jlim.taskmanager.entity.Task;
+import com.jlim.taskmanager.repository.TaskRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -11,64 +14,63 @@ import java.util.List;
 @RequestMapping("/api/v1/tasks") //base url
 public class TaskController {
 
-    // temporary in memory task list
-    private List<Task> tasks = new ArrayList<>();
-    private Long nextId = 1L;
+    // constructor injection
+    private TaskRepository taskRepository;
+
+    public TaskController (TaskRepository taskRepository){
+        this.taskRepository = taskRepository;
+    }
 
     // CRUD endpoints
 
     // -- Get
     @GetMapping("/{id}")
-    public Task getATaskById(@PathVariable Long id){
-        return tasks.stream()
-                .filter(task -> task.getId().equals(id))
-                .findFirst()
-                .orElse(null);
+    public ResponseEntity<Task> getATaskById(@PathVariable Long id){
+        return taskRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
     public List<Task> getAllTasks(){
-        return tasks;
+        return taskRepository.findAll();
     }
 
     // -- Create
     // create task
     @PostMapping
-    public Task createTask(@RequestBody Task task){
-        task.setId(nextId++);
-        task.setCreatedAt(LocalDateTime.now());
-        task.setCompleted(false);
-        tasks.add(task);
-
-        return task;
+    public ResponseEntity<Task> createTask(@RequestBody Task task){
+        Task savedTask = taskRepository.save(task);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedTask);
     }
 
     // -- Update
     // can also use tasks.stream instead of for loop
     // send id and desired task request
     @PutMapping("/{id}")
-    public Task updateTask(@PathVariable Long id, @RequestBody Task updatedTask){
-        for (int i = 0; i < tasks.size(); i++){
-            Task task = tasks.get(i);
+    public ResponseEntity<Task> updateTask(@PathVariable Long id, @RequestBody Task updatedTask){
+        return taskRepository.findById(id)
+                .map(task -> {
+                    task.setTitle(updatedTask.getTitle());
+                    task.setDescription(updatedTask.getDescription());
+                    task.setCompleted(updatedTask.getCompleted());
+                    Task savedTask = taskRepository.save(task);
 
-            if (task.getId().equals(id)){
-                updatedTask.setId(id);
-                updatedTask.setCreatedAt(task.getCreatedAt());
-
-                // replace the old task with new updated one
-                tasks.set(i, updatedTask);
-                return updatedTask;
-            }
-
-        }
-        return null;
+                    return ResponseEntity.ok(savedTask);
+                })
+                .orElse(ResponseEntity.notFound().build());
 
     }
-    
+
     // -- Delete
     @DeleteMapping("/{id}")
-    public void deleteTask(@PathVariable Long id){
-        tasks.removeIf(task -> task.getId().equals(id));
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id){
+        return taskRepository.findById(id)
+                .map(task -> {
+                    taskRepository.delete(task);
+                    return ResponseEntity.ok().<Void>build();
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
 }
