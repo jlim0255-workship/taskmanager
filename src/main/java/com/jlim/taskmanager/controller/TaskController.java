@@ -3,6 +3,7 @@ package com.jlim.taskmanager.controller;
 import com.jlim.taskmanager.entity.Task;
 import com.jlim.taskmanager.repository.TaskRepository;
 import com.jlim.taskmanager.service.TaskService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,10 +27,8 @@ public class TaskController {
 
     // -- Get
     @GetMapping("/{id}")
-    public ResponseEntity<Task> getTaskById(@PathVariable Long id){
-        return taskService.getTaskById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public Task getTaskById(@PathVariable Long id){
+        return taskService.getTaskById(id);
     }
 
     @GetMapping
@@ -40,7 +39,7 @@ public class TaskController {
     // -- Create
     // create task
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody Task task){
+    public ResponseEntity<Task> createTask(@Valid @RequestBody Task task){
         Task savedTask = taskService.createTask(task);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTask);
     }
@@ -49,19 +48,15 @@ public class TaskController {
     // can also use tasks.stream instead of for loop
     // send id and desired task request
     @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(@PathVariable Long id, @RequestBody Task updatedTask){
-        return taskService.updateTask(id, updatedTask)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-
+    public Task updateTask(@PathVariable Long id, @Valid @RequestBody Task updatedTask){
+        return taskService.updateTask(id, updatedTask);
     }
 
     // -- Delete
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTask(@PathVariable Long id){
-        return taskService.deleteTask(id)
-                ? ResponseEntity.ok().build()
-                : ResponseEntity.notFound().build();
+        taskService.deleteTask(id);
+        return ResponseEntity.ok().build();
     }
 
     // -- Custom endpoint
