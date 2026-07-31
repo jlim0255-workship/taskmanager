@@ -41,6 +41,23 @@ public class TaskService {
         return taskRepository.findById(id).orElseThrow(() -> new TaskNotFoundException(id));
     }
 
+    // -- Search
+
+    public Page<Task> searchTasksByTitle(String title, Pageable pageable) {
+        return taskRepository.findByTitleContainingIgnoreCase(title, pageable);
+    }
+
+    public Page<Task> searchTasksByTitleAndCompletion(String title,
+                                                      Boolean completed,
+                                                      Pageable pageable) {
+        return taskRepository.findByTitleContainingAndCompleted(title,
+                completed, pageable);
+    }
+
+    public Page<Task> getTasksByCompletion(Boolean completed, Pageable pageable) {
+        return taskRepository.findByCompleted(completed, pageable);
+    }
+
     public TaskResponse createTask(TaskRequest task){
 
         Task entityTask = taskMapper.toEntity(task);
