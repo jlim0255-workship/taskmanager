@@ -7,6 +7,8 @@ import com.jlim.taskmanager.exception.TaskNotFoundException;
 import com.jlim.taskmanager.mapper.TaskMapper;
 import com.jlim.taskmanager.repository.TaskRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +31,10 @@ public class TaskService {
     // CRUD
     public List<Task> getAllTasks(){
         return taskRepository.findAll();
+    }
+
+    public Page<Task> getAllTasks(Pageable pageable){
+        return taskRepository.findAll(pageable);
     }
 
     public Task getTaskById(Long id){
@@ -59,12 +65,21 @@ public class TaskService {
     }
 
     // -- Custom Endpoints
-    public List<Task> getTasksByCompletionStatus(boolean completed){
-        return taskRepository.findTasksByCompletionStatus(completed);
+    public List<TaskResponse> getTasksByCompletionStatus(boolean status){
+        final List<Task> completedTasks = taskRepository.findByCompleted(status);
+        return completedTasks.stream().map(taskMapper::toResponse).toList();
     }
 
-    public List<Task> getTasksByTitle(String title){
-        return taskRepository.findByTitleContainingIgnoreCase(title);
+    public List<TaskResponse> getTasksByTitle(String title){
+        List<Task> tasks = taskRepository.findByTitleContainingIgnoreCase(title);
+        return tasks.stream()
+                .map(taskMapper::toResponse)
+                .toList();
+    }
+
+    public Page<TaskResponse> getTasksByCompletionStatus(boolean status, Pageable pageable){
+        final Page<Task> completedTasks = taskRepository.findByCompleted(status, pageable);
+        return completedTasks.map(taskMapper::toResponse);
     }
 
 }
