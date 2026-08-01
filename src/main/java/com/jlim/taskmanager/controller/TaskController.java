@@ -19,70 +19,17 @@ import java.util.List;
 import java.util.Map;
 
 @RestController // @Controller and @ResponseBody
-@RequestMapping("/api/v1/tasks") //base url
+@RequestMapping("/api/v1/tasks")
 public class TaskController {
 
-    // constructor injection
-//    private TaskRepository taskRepository;
     private final TaskService taskService;
 
-    public TaskController (TaskService taskService){
-
+    //Constructor Injection
+    //@Autowired
+    public TaskController(TaskService taskService) {
         this.taskService = taskService;
     }
 
-    // CRUD endpoints
-
-    // -- Get
-    @GetMapping("/{id}")
-    public Task getTaskById(@PathVariable Long id){
-        return taskService.getTaskById(id);
-    }
-
-    @GetMapping
-    public List<Task> getAllTasks(){
-        return taskService.getAllTasks();
-    }
-
-    @GetMapping
-    public ResponseEntity<Map<String, Object>> getAllTasks(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "DESC") String sortDir
-    ){
-        // Implementation for paginated task retrieval
-        Sort sort = sortDir.equalsIgnoreCase("ASC") ?
-                Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-
-        // init page, size, sort into a Pageable object
-        Pageable pageable = PageRequest.of(page,size,sort);
-        Page<Task> taskPage = taskService.getAllTasks(pageable);
-
-        List<TaskResponse> tasks = taskPage.getContent()
-                .stream()
-                .map(task -> new TaskResponse(
-                        task.getId(),
-                        task.getTitle(),
-                        task.getDescription(),
-                        task.getCompleted(),
-                        task.getCreatedAt(),
-                        null
-                )).toList();
-
-        Map<String, Object> response = new HashMap<>();
-
-        response.put("tasks", tasks);
-        response.put("currentPage", taskPage.getNumber());
-        response.put("totalItems", taskPage.getTotalElements());
-        response.put("totalPages", taskPage.getTotalPages());
-        response.put("hasNext", taskPage.hasNext());
-        response.put("hasPrevious", taskPage.hasPrevious());
-
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
-
-    // -- search
     @GetMapping("/search")
     public ResponseEntity<Map<String, Object>> searchTasks(
             @RequestParam(required = false) String title,
@@ -90,14 +37,13 @@ public class TaskController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "DESC") String sortDir
-    ){
-        // Implementation for paginated task retrieval
+            @RequestParam(defaultValue = "DESC") String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ?
-                Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+                Sort.by(sortBy).ascending() :
+                Sort.by(sortBy).descending();
 
-        // init page, size, sort into a Pageable object
-        Pageable pageable = PageRequest.of(page,size,sort);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
         Page<Task> taskPage;
 
         if (title != null && completed != null) {
@@ -123,11 +69,10 @@ public class TaskController {
                         task.getDescription(),
                         task.getCompleted(),
                         task.getCreatedAt(),
-                        null
-                )).toList();
+                        null))
+                .toList();
 
         Map<String, Object> response = new HashMap<>();
-
         response.put("tasks", tasks);
         response.put("currentPage", taskPage.getNumber());
         response.put("totalItems", taskPage.getTotalElements());
@@ -135,45 +80,83 @@ public class TaskController {
         response.put("hasNext", taskPage.hasNext());
         response.put("hasPrevious", taskPage.hasPrevious());
 
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> getAllTasks(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase("ASC") ?
+                Sort.by(sortBy).ascending() :
+                Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Task> taskPage = taskService.getAllTasks(pageable);
+
+        List<TaskResponse> tasks = taskPage.getContent()
+                .stream()
+                .map(task -> new TaskResponse(
+                        task.getId(),
+                        task.getTitle(),
+                        task.getDescription(),
+                        task.getCompleted(),
+                        task.getCreatedAt(),
+                        null))
+                .toList();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("tasks", tasks);
+        response.put("currentPage", taskPage.getNumber());
+        response.put("totalItems", taskPage.getTotalElements());
+        response.put("totalPages", taskPage.getTotalPages());
+        response.put("hasNext", taskPage.hasNext());
+        response.put("hasPrevious", taskPage.hasPrevious());
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
 
+    @GetMapping("/{id}")
+    public TaskResponse getTaskById (@PathVariable Long id) {
+        return taskService.getTaskById(id);
+    }
 
-    // -- Create
-    // create task
     @PostMapping
-    public ResponseEntity<TaskResponse> createTask(@Valid @RequestBody TaskRequest task){
+    public ResponseEntity<TaskResponse> createTask(@Valid @RequestBody TaskRequest task) {
         TaskResponse savedTask = taskService.createTask(task);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTask);
     }
 
-    // -- Update
-    // can also use tasks.stream instead of for loop
-    // send id and desired task request
     @PutMapping("/{id}")
-    public TaskResponse updateTask(@PathVariable Long id, @Valid @RequestBody TaskRequest updatedTask){
+    public TaskResponse updateTask (@PathVariable Long id,
+                                    @Valid @RequestBody TaskRequest updatedTask) {
         return taskService.updateTask(id, updatedTask);
     }
 
-    // -- Delete
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable Long id){
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
         taskService.deleteTask(id);
         return ResponseEntity.ok().build();
     }
 
-    // -- Custom endpoint
     @GetMapping("/completed/{status}")
-    public List<TaskResponse> getTasksByCompletions(@PathVariable boolean status){
+    public List<TaskResponse> getTasksByCompletions(@PathVariable boolean status) {
         return taskService.getTasksByCompletionStatus(status);
     }
 
-    @GetMapping("/search")
-    public List<TaskResponse> searchTasksByTitle(@RequestParam String title){
-        return taskService.getTasksByTitle(title);
+    @GetMapping("/search-by-title")
+    public List<TaskResponse> searchTasksByTitle(@RequestParam String title) {
+        return taskService.searchTasksByTitle(title);
     }
 
+    /**
+     * 200 OK - Successful GET, PUT, DELETE
+     * 201 Created - Successful POST (we should return this)
+     * 404 Not Found - Resource doesn't exist
+     * 400 Bad Request - Invalid data
+     */
 }

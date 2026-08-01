@@ -2,7 +2,9 @@ package com.jlim.taskmanager.service;
 
 import com.jlim.taskmanager.entity.Category;
 import com.jlim.taskmanager.repository.CategoryRepository;
+import org.springframework.stereotype.Service;
 
+@Service
 public class CategoryService {
     private final CategoryRepository categoryRepository;
 
